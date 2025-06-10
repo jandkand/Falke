@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falke - Sistema de Controle de Defeitos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Marcellus&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+
+</head>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #2d3748;
+    line-height: 1.6;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* App Container */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+.app-header {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand h1 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.025em;
+}
+
+.brand-subtitle {
+    font-family: "Marcellus", serif;
+    color: #a0aec0;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.header-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.machine-info {
+    color: #4fd1c7;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: rgba(79, 209, 199, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(79, 209, 199, 0.2);
+}
+
+.current-date {
+    color: #cbd5e0;
+    font-size: 0.875rem;
+}
+
+/* Main Content */
+.app-main {
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Panel Styles */
+.form-panel, .data-panel {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.panel-header {
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+.panel-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 0.5rem;
+}
+
+.panel-subtitle {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+/* Form Styles */
+.form-container {
+    padding: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.label-required {
+    color: #ef4444;
+    font-weight: 400;
+}
+
+.label-optional {
+    color: #6b7280;
+    font-weight: 400;
+    font-size: 0.75rem;
+    background: #f3f4f6;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    color: #374151;
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+.section-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 1rem;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 16px -4px rgba(79, 70, 229, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 16px -4px rgba(5, 150, 105, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 16px -4px rgba(220, 38, 38, 0.3);
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Statistics Section */
+.stats-section {
+    padding: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.stats-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 16px -4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+}
+
+.stat-defects .stat-icon {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.stat-rate .stat-icon {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.stat-production .stat-icon {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.stat-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Records Section */
+.records-section {
+    padding: 2rem;
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 0.25rem;
+}
+
+.section-subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.table-container {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    color: white;
+    padding: 1rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.data-table td {
+    padding: 0.875rem 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.data-table tr:hover:not(.empty-state) {
+    background: #f8fafc;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.delete-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.empty-state td {
+    padding: 3rem 1rem;
+    text-align: center;
+    background: #f9fafb;
+}
+
+.empty-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+/* Charts Section */
+.charts-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.charts-section .section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.charts-section .section-header h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 0.5rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.chart-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 0.25rem;
+}
+
+.chart-subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Management Section */
+.management-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.management-card {
+    padding: 2rem;
+    text-align: center;
+}
+
+.management-header {
+    margin-bottom: 2rem;
+}
+
+.management-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 0.5rem;
+}
+
+.management-subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.management-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.management-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f0f9ff;
+    border-radius: 0.5rem;
+    border: 1px solid #e0f2fe;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-icon {
+    font-size: 1.25rem;
+}
+
+.info-text {
+    color: #0369a1;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .app-main {
+        padding: 1rem;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .header-content {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .brand h1 {
+        font-size: 1.5rem;
+    }
+
+    .input-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+
+    .management-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-container,
+    .stats-section,
+    .records-section,
+    .charts-section,
+    .management-card {
+        padding: 1rem;
+    }
+
+    .panel-header {
+        padding: 1rem;
+    }
+
+    .brand h1 {
+        font-size: 1.25rem;
+    }
+
+    .stats-section h2,
+    .charts-section .section-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .chart-container {
+        height: 200px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e2e8f0;
+    border-top: 2px solid #4f46e5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+</style>
+<body>
+    <div class="app-container">
+        <!-- Header Section -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="brand">
+                    <h1>Falke</h1>
+                    <span class="brand-subtitle">Sistema de Controle de Defeitos</span>
+                </div>
+                <div class="header-info">
+                    <span class="machine-info">Máquinas XXX</span>
+                    <div class="current-date" id="currentDate"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Application Content -->
+        <main class="app-main">
+            <div class="content-grid">
+                <!-- Left Panel - Form Section -->
+                <section class="form-panel">
+                    <div class="panel-header">
+                        <h2>Registro de Dados</h2>
+                        <div class="panel-subtitle">Registre produção e defeitos de forma eficiente</div>
+                    </div>
+
+                    <div class="form-container">
+                        <!-- Date Selection -->
+                        <div class="input-group">
+                            <label for="date" class="input-label">
+                                <span class="label-text">Data de Apontamento</span>
+                                <span class="label-required">*</span>
+                            </label>
+                            <input type="date" id="date" class="form-input" required>
+                        </div>
+
+                        <!-- Record Type Selection -->
+                        <div class="input-group">
+                            <label for="recordType" class="input-label">
+                                <span class="label-text">Tipo de Registro</span>
+                                <span class="label-required">*</span>
+                            </label>
+                            <select id="recordType" class="form-select" required>
+                                <option value="">Selecione o tipo de registro</option>
+                                <option value="production">📊 Produção Total do Turno</option>
+                                <option value="defect">⚠️ Registro de Defeito</option>
+                            </select>
+                        </div>
+
+                        <!-- Production Section -->
+                        <div id="productionSection" class="form-section" style="display: none;">
+                            <div class="section-header">
+                                <h3>Dados de Produção</h3>
+                            </div>
+                            <div class="input-group">
+                                <label for="totalProduction" class="input-label">
+                                    <span class="label-text">Produção Total do Turno</span>
+                                    <span class="label-required">*</span>
+                                </label>
+                                <input type="number" id="totalProduction" class="form-input" 
+                                       placeholder="Quantidade total produzida" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Defect Section -->
+                        <div id="defectSection" class="form-section" style="display: none;">
+                            <div class="section-header">
+                                <h3>Dados do Defeito</h3>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label for="piece" class="input-label">
+                                        <span class="label-text">Código da Peça</span>
+                                        <span class="label-optional">opcional</span>
+                                    </label>
+                                    <input type="text" id="piece" class="form-input" placeholder="Ex: PC-001">
+                                </div>
+                                <div class="input-group">
+                                    <label for="defect" class="input-label">
+                                        <span class="label-text">Tipo de Defeito</span>
+                                        <span class="label-required">*</span>
+                                    </label>
+                                    <select id="defect" class="form-select">
+                                        <option value="">Selecione o defeito</option>
+                                        <option value="FR">FR</option>
+                                        <option value="FD">FD</option>
+                                        <option value="FA">FA</option>
+                                        <option value="RD">RD</option>
+                                        <option value="AC">AC</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label for="region" class="input-label">
+                                        <span class="label-text">Região</span>
+                                        <span class="label-optional">opcional</span>
+                                    </label>
+                                    <input type="number" id="region" class="form-input" 
+                                           placeholder="1-31" min="1" max="31">
+                                </div>
+                                <div class="input-group">
+                                    <label for="quantity" class="input-label">
+                                        <span class="label-text">Quantidade</span>
+                                        <span class="label-required">*</span>
+                                    </label>
+                                    <input type="number" id="quantity" class="form-input" 
+                                           placeholder="Qtd. defeituosa" min="1" value="1">
+                                </div>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label for="operator" class="input-label">
+                                        <span class="label-text">Operador</span>
+                                        <span class="label-optional">opcional</span>
+                                    </label>
+                                    <input type="text" id="operator" class="form-input" placeholder="Nome do operador">
+                                </div>
+                                <div class="input-group">
+                                    <label for="mold" class="input-label">
+                                        <span class="label-text">Molde</span>
+                                        <span class="label-optional">opcional</span>
+                                    </label>
+                                    <input type="text" id="mold" class="form-input" placeholder="Código do molde">
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="foundingDate" class="input-label">
+                                    <span class="label-text">Data de Fundição</span>
+                                    <span class="label-optional">opcional</span>
+                                </label>
+                                <input type="date" id="foundingDate" class="form-input">
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="form-actions">
+                            <button type="button" id="addRecordBtn" class="btn btn-primary">
+                                <span class="btn-icon">✓</span>
+                                Adicionar Registro
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Panel - Statistics and Records -->
+                <section class="data-panel">
+                    <!-- Statistics Cards -->
+                    <div class="stats-section">
+                        <h2>Indicadores do Dia</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card stat-defects">
+                                <div class="stat-icon">⚠️</div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="totalDefects">0</div>
+                                    <div class="stat-label">Total de Defeitos</div>
+                                </div>
+                            </div>
+                            <div class="stat-card stat-rate">
+                                <div class="stat-icon">📊</div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="defectRate">0%</div>
+                                    <div class="stat-label">Taxa de Defeitos</div>
+                                </div>
+                            </div>
+                            <div class="stat-card stat-production">
+                                <div class="stat-icon">🏭</div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="dailyProduction">0</div>
+                                    <div class="stat-label">Produção do Dia</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Records Table -->
+                    <div class="records-section">
+                        <div class="section-header">
+                            <h3>Registros de Defeitos</h3>
+                            <div class="section-subtitle">Defeitos registrados para o dia selecionado</div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Peça</th>
+                                        <th>Defeito</th>
+                                        <th>Operador</th>
+                                        <th>Qtd</th>
+                                        <th>Molde</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recordsTable">
+                                    <tr class="empty-state">
+                                        <td colspan="6">
+                                            <div class="empty-message">
+                                                <div class="empty-icon">📋</div>
+                                                <p>Nenhum defeito registrado para este dia</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="section-header">
+                    <h2>Análise de Dados</h2>
+                    <div class="section-subtitle">Visualizações e tendências dos defeitos registrados</div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Distribuição por Tipo</h3>
+                            <div class="chart-subtitle">Defeitos agrupados por categoria</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="defectTypeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Defeitos por Molde</h3>
+                            <div class="chart-subtitle">Análise por equipamento</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="moldChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Defeitos por Operador</h3>
+                            <div class="chart-subtitle">Performance individual</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="operatorChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Tendência Temporal</h3>
+                            <div class="chart-subtitle">Evolução dos defeitos ao longo do tempo</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Management Section -->
+            <section class="management-section">
+                <div class="management-card">
+                    <div class="management-header">
+                        <h3>Gerenciamento de Dados</h3>
+                        <div class="management-subtitle">Exporte ou limpe os dados do sistema</div>
+                    </div>
+                    <div class="management-actions">
+                        <button type="button" id="exportDataBtn" class="btn btn-success">
+                            <span class="btn-icon">📁</span>
+                            Exportar Dados
+                        </button>
+                        <button type="button" id="clearAllBtn" class="btn btn-danger">
+                            <span class="btn-icon">🗑️</span>
+                            Limpar Tudo
+                        </button>
+                    </div>
+                    <div class="management-info">
+                        <div class="info-item">
+                            <span class="info-icon">💾</span>
+                            <span class="info-text">Os dados são salvos automaticamente</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+// DEXCO - Sistema de Controle de Defeitos
+// Web-compatible version without Tauri dependencies
+
+let defectRecords = [];
+let productionData = {};
+
+// Storage key for localStorage
+const STORAGE_KEY = 'dexco_data';
+
+// Set today's date as default and update current date display
+function initializeDate() {
+    const dateElement = document.getElementById('date');
+    const currentDateElement = document.getElementById('currentDate');
+    
+    if (dateElement) {
+        dateElement.valueAsDate = new Date();
+    }
+    
+    if (currentDateElement) {
+        const today = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        currentDateElement.textContent = today.toLocaleDateString('pt-BR', options);
+    }
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Record type change listener
+    const recordTypeSelect = document.getElementById('recordType');
+    if (recordTypeSelect) {
+        recordTypeSelect.addEventListener('change', toggleFormSections);
+    }
+
+    // Date change listener to update records table and statistics
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.addEventListener('change', () => {
+            updateRecordsTable();
+            updateStatistics();
+        });
+    }
+
+    // Button event listeners
+    const addRecordBtn = document.getElementById('addRecordBtn');
+    if (addRecordBtn) {
+        addRecordBtn.addEventListener('click', addRecord);
+    }
+
+    const exportDataBtn = document.getElementById('exportDataBtn');
+    if (exportDataBtn) {
+        exportDataBtn.addEventListener('click', exportData);
+    }
+
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllData);
+    }
+
+    // Form validation on input
+    setupFormValidation();
+}
+
+// Setup form validation
+function setupFormValidation() {
+    const inputs = document.querySelectorAll('.form-input, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', validateField);
+        input.addEventListener('input', clearFieldError);
+    });
+}
+
+function validateField(event) {
+    const field = event.target;
+    const value = field.value.trim();
+    
+    // Remove existing error styling
+    field.classList.remove('error');
+    
+    // Check required fields
+    if (field.hasAttribute('required') && !value) {
+        showFieldError(field, 'Este campo é obrigatório');
+        return false;
+    }
+    
+    // Validate specific field types
+    if (field.type === 'number' && value) {
+        const num = parseFloat(value);
+        const min = parseFloat(field.getAttribute('min'));
+        const max = parseFloat(field.getAttribute('max'));
+        
+        if (isNaN(num)) {
+            showFieldError(field, 'Digite um número válido');
+            return false;
+        }
+        
+        if (min !== null && num < min) {
+            showFieldError(field, `Valor mínimo: ${min}`);
+            return false;
+        }
+        
+        if (max !== null && num > max) {
+            showFieldError(field, `Valor máximo: ${max}`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function showFieldError(field, message) {
+    field.classList.add('error');
+    
+    // Add error styles if not already added
+    if (!document.getElementById('errorStyles')) {
+        const style = document.createElement('style');
+        style.id = 'errorStyles';
+        style.textContent = `
+            .form-input.error, .form-select.error {
+                border-color: #ef4444 !important;
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function clearFieldError(event) {
+    event.target.classList.remove('error');
+}
+
+// Load data from localStorage
+function loadData() {
+    try {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            defectRecords = data.defect_records || [];
+            productionData = data.production_data || {};
+        }
+        
+        updateRecordsTable();
+        updateStatistics();
+        
+        if (defectRecords.length > 0) {
+            generateCharts();
+        }
+        
+        console.log('Dados carregados com sucesso');
+    } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        showErrorMessage('Erro ao carregar dados salvos');
+    }
+}
+
+// Save data to localStorage
+function saveData() {
+    try {
+        const dataToSave = {
+            defect_records: defectRecords,
+            production_data: productionData,
+            last_updated: new Date().toISOString()
+        };
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        console.log('Dados salvos automaticamente');
+    } catch (error) {
+        console.error('Erro ao salvar dados:', error);
+        showErrorMessage('Erro ao salvar dados automaticamente');
+    }
+}
+
+function toggleFormSections() {
+    const recordType = document.getElementById('recordType').value;
+    const productionSection = document.getElementById('productionSection');
+    const defectSection = document.getElementById('defectSection');
+
+    if (recordType === 'production') {
+        productionSection.style.display = 'block';
+        productionSection.classList.add('fade-in');
+        defectSection.style.display = 'none';
+        clearDefectFields();
+    } else if (recordType === 'defect') {
+        productionSection.style.display = 'none';
+        defectSection.style.display = 'block';
+        defectSection.classList.add('fade-in');
+        clearProductionFields();
+    } else {
+        productionSection.style.display = 'none';
+        defectSection.style.display = 'none';
+    }
+}
+
+function clearDefectFields() {
+    document.getElementById('piece').value = '';
+    document.getElementById('defect').value = '';
+    document.getElementById('region').value = '';
+    document.getElementById('operator').value = '';
+    document.getElementById('foundingDate').value = '';
+    document.getElementById('quantity').value = '1';
+    document.getElementById('mold').value = '';
+}
+
+function clearProductionFields() {
+    document.getElementById('totalProduction').value = '';
+}
+
+function addRecord() {
+    const date = document.getElementById('date').value;
+    const recordType = document.getElementById('recordType').value;
+
+    if (!date || !recordType) {
+        showErrorMessage('Por favor, preencha a data e selecione o tipo de registro.');
+        return;
+    }
+
+    try {
+        if (recordType === 'production') {
+            addProductionRecord(date);
+        } else if (recordType === 'defect') {
+            addDefectRecord(date);
+        }
+    } catch (error) {
+        console.error('Erro ao adicionar registro:', error);
+        showErrorMessage('Erro ao adicionar registro: ' + error.message);
+    }
+}
+
+function addProductionRecord(date) {
+    const totalProduction = parseInt(document.getElementById('totalProduction').value);
+    
+    if (!totalProduction || totalProduction <= 0) {
+        showErrorMessage('Por favor, informe uma produção total válida.');
+        return;
+    }
+
+    // Update production data (cumulative for the day)
+    const currentProduction = productionData[date] || 0;
+    const newTotal = currentProduction + totalProduction;
+    productionData[date] = newTotal;
+    
+    saveData();
+    showSuccessMessage(`Produção de ${totalProduction} unidades registrada para ${formatDate(date)}! Total do dia: ${newTotal}`);
+    
+    updateStatistics();
+    generateCharts();
+    clearCurrentForm();
+}
+
+function addDefectRecord(date) {
+    const defectType = document.getElementById('defect').value;
+    const region = document.getElementById('region').value;
+    const quantity = parseInt(document.getElementById('quantity').value) || 1;
+    
+    if (!defectType) {
+        showErrorMessage('Por favor, selecione o tipo de defeito.');
+        return;
+    }
+
+    // Merge defect type with region if region is provided
+    let mergedDefect = defectType;
+    if (region && region.trim() !== '') {
+        mergedDefect = `${defectType}-${region}`;
+    }
+
+    // Create new defect record
+    const record = {
+        id: generateId(),
+        date: date,
+        piece: document.getElementById('piece').value || 'N/A',
+        defect: mergedDefect,
+        operator: document.getElementById('operator').value || 'N/A',
+        foundingDate: document.getElementById('foundingDate').value || date,
+        quantity: quantity,
+        mold: document.getElementById('mold').value || 'N/A',
+        timestamp: new Date().toISOString()
+    };
+
+    defectRecords.push(record);
+    saveData();
+    
+    showSuccessMessage(`Defeito registrado: ${quantity} unidade(s) com ${mergedDefect}!`);
+    
+    updateRecordsTable();
+    updateStatistics();
+    generateCharts();
+    clearCurrentForm();
+}
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function clearCurrentForm() {
+    const recordType = document.getElementById('recordType').value;
+    
+    if (recordType === 'production') {
+        document.getElementById('totalProduction').value = '';
+    } else if (recordType === 'defect') {
+        // Clear most fields but keep defect type and quantity for quick re-entry
+        document.getElementById('piece').value = '';
+        document.getElementById('region').value = '';
+        document.getElementById('operator').value = '';
+        document.getElementById('foundingDate').value = '';
+        document.getElementById('mold').value = '';
+        // Keep defect and quantity for easier successive entries
+    }
+    
+    // Reset to selection screen
+    document.getElementById('recordType').value = '';
+    toggleFormSections();
+}
+
+function deleteRecord(id) {
+    if (confirm('Tem certeza que deseja excluir este registro?')) {
+        try {
+            defectRecords = defectRecords.filter(record => record.id !== id);
+            saveData();
+            
+            updateRecordsTable();
+            updateStatistics();
+            generateCharts();
+            
+            showSuccessMessage('Registro excluído com sucesso!');
+        } catch (error) {
+            console.error('Erro ao excluir registro:', error);
+            showErrorMessage('Erro ao excluir registro: ' + error.message);
+        }
+    }
+}
+
+function updateRecordsTable() {
+    const selectedDate = document.getElementById('date').value;
+    const todayRecords = defectRecords.filter(record => record.date === selectedDate);
+    
+    const tbody = document.getElementById('recordsTable');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+
+    if (todayRecords.length === 0) {
+        const row = tbody.insertRow();
+        row.className = 'empty-state';
+        row.innerHTML = `
+            <td colspan="6">
+                <div class="empty-message">
+                    <div class="empty-icon">📋</div>
+                    <p>Nenhum defeito registrado para ${formatDate(selectedDate)}</p>
+                </div>
+            </td>
+        `;
+        return;
+    }
+
+    todayRecords.forEach(record => {
+        const row = tbody.insertRow();
+        row.className = 'slide-in';
+        row.innerHTML = `
+            <td>${record.piece}</td>
+            <td><span class="defect-badge">${record.defect}</span></td>
+            <td>${record.operator}</td>
+            <td><span class="quantity-badge">${record.quantity}</span></td>
+            <td>${record.mold}</td>
+            <td><button class="delete-btn" data-record-id="${record.id}">🗑️ Excluir</button></td>
+        `;
+        
+        // Add event listener to the delete button
+        const deleteBtn = row.querySelector('.delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => deleteRecord(record.id));
+        }
+    });
+
+    // Add styling for badges if not already added
+    addTableStyling();
+}
+
+function addTableStyling() {
+    if (!document.getElementById('tableBadgeStyles')) {
+        const style = document.createElement('style');
+        style.id = 'tableBadgeStyles';
+        style.textContent = `
+            .defect-badge {
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                color: #92400e;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+            .quantity-badge {
+                background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                color: #1e40af;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function updateStatistics() {
+    const selectedDate = document.getElementById('date').value;
+    const todayRecords = defectRecords.filter(record => record.date === selectedDate);
+    const totalDefects = todayRecords.reduce((sum, record) => sum + record.quantity, 0);
+    const totalProduction = productionData[selectedDate] || 0;
+    const defectRate = totalProduction > 0 ? ((totalDefects / totalProduction) * 100).toFixed(2) : 0;
+
+    // Update statistics with animation
+    updateStatCard('totalDefects', totalDefects);
+    updateStatCard('defectRate', defectRate + '%');
+    updateStatCard('dailyProduction', totalProduction);
+}
+
+function updateStatCard(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const oldValue = element.textContent;
+        if (oldValue !== value.toString()) {
+            element.style.transform = 'scale(1.1)';
+            element.textContent = value;
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 200);
+        }
+    }
+}
+
+function generateCharts() {
+    if (defectRecords.length === 0) {
+        clearAllCharts();
+        return;
+    }
+
+    generateDefectTypeChart();
+    generateMoldChart();
+    generateOperatorChart();
+    generateTrendChart();
+}
+
+function clearAllCharts() {
+    const chartIds = ['defectTypeChart', 'moldChart', 'operatorChart', 'trendChart'];
+    chartIds.forEach(id => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#f3f4f6';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '16px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('Sem dados para exibir', canvas.width / 2, canvas.height / 2);
+        }
+    });
+}
+
+function generateDefectTypeChart() {
+    const canvas = document.getElementById('defectTypeChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (window.defectTypeChartInstance) {
+        window.defectTypeChartInstance.destroy();
+    }
+    
+    // Group by defect type
+    const defectTypes = {};
+    defectRecords.forEach(record => {
+        defectTypes[record.defect] = (defectTypes[record.defect] || 0) + record.quantity;
+    });
+
+    const labels = Object.keys(defectTypes);
+    const data = Object.values(defectTypes);
+
+    if (labels.length === 0) return;
+
+    window.defectTypeChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                    '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+                    '#E74C3C', '#2ECC71', '#F39C12', '#8E44AD',
+                    '#3498DB', '#1ABC9C', '#E67E22', '#95A5A6'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateMoldChart() {
+    const canvas = document.getElementById('moldChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (window.moldChartInstance) {
+        window.moldChartInstance.destroy();
+    }
+    
+    const moldDefects = {};
+    defectRecords.forEach(record => {
+        moldDefects[record.mold] = (moldDefects[record.mold] || 0) + record.quantity;
+    });
+
+    const labels = Object.keys(moldDefects);
+    const data = Object.values(moldDefects);
+
+    if (labels.length === 0) return;
+
+    window.moldChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Defeitos por Molde',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: '#36A2EB',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateOperatorChart() {
+    const canvas = document.getElementById('operatorChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (window.operatorChartInstance) {
+        window.operatorChartInstance.destroy();
+    }
+    
+    const operatorDefects = {};
+    defectRecords.forEach(record => {
+        operatorDefects[record.operator] = (operatorDefects[record.operator] || 0) + record.quantity;
+    });
+
+    const labels = Object.keys(operatorDefects);
+    const data = Object.values(operatorDefects);
+
+    if (labels.length === 0) return;
+
+    window.operatorChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Defeitos por Operador',
+                data: data,
+                backgroundColor: 'rgba(255, 206, 86, 0.8)',
+                borderColor: '#FFCE56',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateTrendChart() {
+    const canvas = document.getElementById('trendChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (window.trendChartInstance) {
+        window.trendChartInstance.destroy();
+    }
+    
+    // Group by date
+    const dailyDefects = {};
+    defectRecords.forEach(record => {
+        dailyDefects[record.date] = (dailyDefects[record.date] || 0) + record.quantity;
+    });
+
+    const sortedDates = Object.keys(dailyDefects).sort();
+    const defectCounts = sortedDates.map(date => dailyDefects[date]);
+    const formattedDates = sortedDates.map(date => formatDate(date));
+
+    if (sortedDates.length === 0) return;
+
+    window.trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: formattedDates,
+            datasets: [{
+                label: 'Defeitos por Dia',
+                data: defectCounts,
+                borderColor: '#4BC0C0',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#4BC0C0',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function exportData() {
+    try {
+        const dataToExport = {
+            defect_records: defectRecords,
+            production_data: productionData,
+            export_date: new Date().toISOString(),
+            summary: {
+                total_defect_records: defectRecords.length,
+                total_production_days: Object.keys(productionData).length,
+                date_range: {
+                    first_record: defectRecords.length > 0 ? Math.min(...defectRecords.map(r => new Date(r.date))) : null,
+                    last_record: defectRecords.length > 0 ? Math.max(...defectRecords.map(r => new Date(r.date))) : null
+                }
+            }
+        };
+
+        const dataStr = JSON.stringify(dataToExport, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `dexco_defeitos_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showSuccessMessage('Dados exportados com sucesso! Verifique sua pasta de downloads.');
+    } catch (error) {
+        console.error('Erro ao exportar dados:', error);
+        showErrorMessage('Erro ao exportar dados: ' + error.message);
+    }
+}
+
+function clearAllData() {
+    if (confirm('⚠️ ATENÇÃO: Tem certeza que deseja limpar TODOS os dados?\n\nEsta ação não pode ser desfeita e removerá:\n• Todos os registros de defeitos\n• Todos os dados de produção\n• Histórico completo do sistema')) {
+        try {
+            defectRecords = [];
+            productionData = {};
+            
+            // Clear localStorage
+            localStorage.removeItem(STORAGE_KEY);
+            
+            // Update UI
+            updateRecordsTable();
+            updateStatistics();
+            
+            // Destroy all chart instances
+            if (window.defectTypeChartInstance) window.defectTypeChartInstance.destroy();
+            if (window.moldChartInstance) window.moldChartInstance.destroy();
+            if (window.operatorChartInstance) window.operatorChartInstance.destroy();
+            if (window.trendChartInstance) window.trendChartInstance.destroy();
+            
+            // Clear charts
+            clearAllCharts();
+            
+            showSuccessMessage('✅ Todos os dados foram limpos com sucesso!');
+        } catch (error) {
+            console.error('Erro ao limpar dados:', error);
+            showErrorMessage('Erro ao limpar dados: ' + error.message);
+        }
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+function showSuccessMessage(message) {
+    showNotification(message, 'success');
+}
+
+function showErrorMessage(message) {
+    showNotification(message, 'error');
+}
+
+function showNotification(message, type = 'success') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(n => n.remove());
+
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    
+    const bgColor = type === 'success' ? '#27ae60' : '#e74c3c';
+    const icon = type === 'success' ? '✅' : '❌';
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 1000;
+        font-weight: 600;
+        animation: slideDown 0.3s ease;
+        max-width: 80%;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+    
+    notification.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    
+    // Add animation keyframes if not already added
+    if (!document.getElementById('notificationStyles')) {
+        const style = document.createElement('style');
+        style.id = 'notificationStyles';
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove with animation
+    setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, type === 'success' ? 4000 : 6000);
+}
+
+// Auto-save data periodically
+setInterval(() => {
+    if (defectRecords.length > 0 || Object.keys(productionData).length > 0) {
+        saveData();
+    }
+}, 30000); // Save every 30 seconds
+
+// Initialize the app
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('🏭 DEXCO - Sistema de Controle de Defeitos iniciado');
+    
+    initializeDate();
+    setupEventListeners();
+    loadData();
+    
+    // Show welcome message
+    setTimeout(() => {
+        showSuccessMessage('🏭 Sistema DEXCO carregado com sucesso!');
+    }, 500);
+});
+
+// Handle page unload
+window.addEventListener('beforeunload', () => {
+    saveData();
+});
+    </script>
+</body>
+</html>
